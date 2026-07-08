@@ -1,5 +1,6 @@
 import os
-
+from typing import List
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain.tools import tool
@@ -11,6 +12,14 @@ from langchain_tavily import TavilySearch
 load_dotenv()
 # tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
+class Source(BaseModel):
+    """Schema for the source used by the agent to get the information from the web"""
+    url: str = Field(description="The url of the source")
+
+class AgentResponse(BaseModel):
+    """Schema for the agent response with answer and sources"""
+    answer: str = Field(description="The agent's answer to the question")
+    sources: List[Source] = Field(default_factory=list, description="The sources used to get the information")
 
 # @tool
 # def search_web(query: str) -> str:
@@ -27,7 +36,7 @@ load_dotenv()
 
 llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0)
 tools = [TavilySearch()]
-agent = create_agent(model=llm, tools=tools)
+agent = create_agent(model=llm, tools=tools, response_format=AgentResponse)
 
 
 def main():
